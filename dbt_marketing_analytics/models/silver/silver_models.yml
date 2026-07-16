@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: silver_hyros_leads
+    description: >
+      Cleaned, typed, and deduplicated lead attribution records.
+      Grain is one row per lead.
+
+    columns:
+      - name: lead_id
+        data_tests:
+          - not_null
+          - unique
+
+      - name: md5_hash
+        data_tests:
+          - not_null
+
+      - name: load_timestamp
+        data_tests:
+          - not_null
+
+
+  - name: silver_marketing_inbound_campaign
+    description: >
+      Cleaned, typed, and deduplicated sales-funnel activity records.
+      Grain is one row per unique lead activity.
+
+    columns:
+      - name: inbound_activity_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: lead_id
+        data_tests:
+          - not_null
+
+      - name: contracted_value
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+
+  - name: silver_hyros_ad_attribution
+    description: >
+      Cleaned, typed, and deduplicated advertisement performance records.
+      Grain is one ad, reporting period, and reporting level.
+
+    columns:
+      - name: ad_performance_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: ad_id
+        data_tests:
+          - not_null
+
+      - name: start_date
+        data_tests:
+          - not_null
+
+      - name: end_date
+        data_tests:
+          - not_null
+
+      - name: reporting_level
+        data_tests:
+          - not_null
+
+      - name: md5_hash
+        data_tests:
+          - not_null

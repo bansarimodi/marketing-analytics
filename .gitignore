@@ -1,0 +1,22 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# dbt generated content
+dbt_marketing_analytics/target/
+dbt_marketing_analytics/logs/
+dbt_marketing_analytics/dbt_packages/
+
+# Root generated logs
+logs/
+
+# Local credentials
+.env
+.dbt/
+profiles.yml
+
+# Local source CSV files
+/HYROS_AD_ATTRIBUTION.csv
+/HYROS_LEADS.csv
+/MARKETING_INBOUND_CAMPAIGN.csv

@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: MARKETING_ANALYTICS
+    schema: BRONZE
+
+    tables:
+      - name: hyros_ad_attribution_raw
+        identifier: HYROS_AD_ATTRIBUTION_RAW
+
+      - name: hyros_leads_raw
+        identifier: HYROS_LEADS_RAW
+
+      - name: marketing_inbound_campaign_raw
+        identifier: MARKETING_INBOUND_CAMPAIGN_RAW

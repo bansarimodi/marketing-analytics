@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: dim_ad
+    description: Latest descriptive record for each advertisement.
+    columns:
+      - name: ad_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_lead
+    description: One row per marketing lead.
+    columns:
+      - name: lead_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    description: Calendar date dimension.
+    columns:
+      - name: date_day
+        data_tests:
+          - not_null
+          - unique
+
+      - name: date_key
+        data_tests:
+          - not_null
+          - unique
+
+  - name: fact_lead_attribution
+    description: First-touch and last-touch attribution for each lead.
+    columns:
+      - name: lead_attribution_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: lead_id
+        data_tests:
+          - not_null
+
+      - name: attribution_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - FIRST_TOUCH
+                  - LAST_TOUCH
+
+  - name: fact_ad_performance
+    description: Advertisement metrics unpivoted by attribution model.
+    columns:
+      - name: ad_attribution_fact_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: ad_id
+        data_tests:
+          - not_null
+
+      - name: attribution_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - FIRST_TOUCH
+                  - LAST_TOUCH
+                  - SCIENTIFIC
+
+  - name: fact_sales_funnel
+    description: Sales-funnel activity with derived stage indicators.
+    columns:
+      - name: inbound_activity_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: lead_id
+        data_tests:
+          - not_null
