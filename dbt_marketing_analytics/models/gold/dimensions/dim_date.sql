@@ -1,98 +1,68 @@
-{{
-    config(
-        materialized='table'
-    )
-}}
-
--- =====================================================================
--- DIMENSION: DATE
---
--- Grain:
---   One row per calendar date.
--- =====================================================================
+{{ config(
+    materialized = 'table'
+) }}
 
 with source_dates as (
 
-    select start_date as date_value
+    select start_date as full_date
     from {{ ref('silver_hyros_ad_attribution') }}
+    where start_date is not null
 
-    union all
+    union
 
-    select end_date
+    select end_date as full_date
     from {{ ref('silver_hyros_ad_attribution') }}
+    where end_date is not null
 
-    union all
+    union
 
-    select cast(created_at as date)
+    select created_at::date as full_date
     from {{ ref('silver_hyros_leads') }}
+    where created_at is not null
 
-    union all
+    union
 
-    select cast(activity_log_at as date)
+    select first_source_click_at::date as full_date
+    from {{ ref('silver_hyros_leads') }}
+    where first_source_click_at is not null
+
+    union
+
+    select last_source_click_at::date as full_date
+    from {{ ref('silver_hyros_leads') }}
+    where last_source_click_at is not null
+
+    union
+
+    select activity_log_at::date as full_date
     from {{ ref('silver_marketing_inbound_campaign') }}
+    where activity_log_at is not null
 
-),
+    union
 
-date_boundaries as (
-
-    select
-        min(date_value) as minimum_date,
-        max(date_value) as maximum_date
-
-    from source_dates
-
-    where date_value is not null
-
-),
-
-generated_dates as (
-
-    select
-        dateadd(
-            day,
-            seq4(),
-            minimum_date
-        )::date as date_day,
-
-        maximum_date
-
-    from date_boundaries,
-         table(generator(rowcount => 10000))
-
-),
-
-final_dates as (
-
-    select date_day
-    from generated_dates
-    where date_day <= maximum_date
+    select triage_call_date as full_date
+    from {{ ref('silver_marketing_inbound_campaign') }}
+    where triage_call_date is not null
 
 )
 
 select
-    date_day,
+    to_number(to_char(full_date, 'YYYYMMDD')) as date_key,
+    full_date,
 
-    to_number(to_char(date_day, 'YYYYMMDD'))
-        as date_key,
+    year(full_date) as year_number,
+    quarter(full_date) as quarter_number,
+    month(full_date) as month_number,
+    monthname(full_date) as month_name,
 
-    year(date_day) as year_number,
-    quarter(date_day) as quarter_number,
-    month(date_day) as month_number,
-    monthname(date_day) as month_name,
-
-    weekofyear(date_day) as week_number,
-    day(date_day) as day_of_month,
-    dayofweekiso(date_day) as day_of_week_number,
-    dayname(date_day) as day_name,
-
-    date_trunc('week', date_day)::date as week_start_date,
-    date_trunc('month', date_day)::date as month_start_date,
-    last_day(date_day, 'month') as month_end_date,
+    weekofyear(full_date) as week_number,
+    dayofmonth(full_date) as day_of_month,
+    dayofweekiso(full_date) as day_of_week_number,
+    dayname(full_date) as day_name,
 
     case
-        when dayofweekiso(date_day) in (6, 7)
-        then true
+        when dayofweekiso(full_date) in (6, 7) then true
         else false
     end as is_weekend
 
-from final_dates
+from source_dates

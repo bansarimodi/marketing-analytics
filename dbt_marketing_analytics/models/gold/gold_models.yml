@@ -1,26 +1,68 @@
 version: 2
 
 models:
-  - name: dim_ad
-    description: Latest descriptive record for each advertisement.
-    columns:
-      - name: ad_id
-        data_tests:
-          - not_null
-          - unique
-
-  - name: dim_lead
-    description: One row per marketing lead.
-    columns:
-      - name: lead_id
-        data_tests:
-          - not_null
-          - unique
+  # ============================================================
+  # DIMENSIONS
+  # ============================================================
 
   - name: dim_date
-    description: Calendar date dimension.
+    description: Date dimension used across Gold fact tables.
+
     columns:
-      - name: date_day
+      - name: date_key
+        description: Numeric date key in YYYYMMDD format.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: full_date
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_platform
+    description: Unique marketing platforms.
+
+    columns:
+      - name: platform_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: platform_name
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_ad
+    description: Advertisement and ad-set descriptive information.
+
+    columns:
+      - name: ad_key
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_campaign
+    description: Marketing campaign descriptive information.
+
+    columns:
+      - name: campaign_key
+        data_tests:
+          - not_null
+          - unique
+
+  # ============================================================
+  # FACTS
+  # ============================================================
+
+  - name: fact_ad_performance
+    description: >
+      Advertisement performance normalized into First-Touch,
+      Last-Touch and Scientific attribution rows.
+
+    columns:
+      - name: ad_performance_fact_key
         data_tests:
           - not_null
           - unique
@@ -28,42 +70,30 @@ models:
       - name: date_key
         data_tests:
           - not_null
-          - unique
-
-  - name: fact_lead_attribution
-    description: First-touch and last-touch attribution for each lead.
-    columns:
-      - name: lead_attribution_key
-        data_tests:
-          - not_null
-          - unique
-
-      - name: lead_id
-        data_tests:
-          - not_null
-
-      - name: attribution_type
-        data_tests:
-          - accepted_values:
+          - relationships:
               arguments:
-                values:
-                  - FIRST_TOUCH
-                  - LAST_TOUCH
+                to: ref('dim_date')
+                field: date_key
 
-  - name: fact_ad_performance
-    description: Advertisement metrics unpivoted by attribution model.
-    columns:
-      - name: ad_attribution_fact_key
+      - name: platform_key
         data_tests:
           - not_null
-          - unique
+          - relationships:
+              arguments:
+                to: ref('dim_platform')
+                field: platform_key
 
-      - name: ad_id
+      - name: ad_key
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_ad')
+                field: ad_key
 
       - name: attribution_type
         data_tests:
+          - not_null
           - accepted_values:
               arguments:
                 values:
@@ -71,10 +101,19 @@ models:
                   - LAST_TOUCH
                   - SCIENTIFIC
 
-  - name: fact_sales_funnel
-    description: Sales-funnel activity with derived stage indicators.
+      - name: marketing_cost
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  - name: fact_lead_attribution
+    description: >
+      One row per lead and attribution type, containing campaign,
+      platform and advertisement attribution.
+
     columns:
-      - name: inbound_activity_key
+      - name: lead_attribution_fact_key
         data_tests:
           - not_null
           - unique
@@ -82,3 +121,65 @@ models:
       - name: lead_id
         data_tests:
           - not_null
+
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: attribution_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - FIRST_TOUCH
+                  - LAST_TOUCH
+
+  - name: fact_sales_funnel
+    description: >
+      CRM and inbound funnel activities. This fact remains separate
+      from lead attribution because the current source lead IDs do
+      not match.
+
+    columns:
+      - name: sales_funnel_fact_key
+        data_tests:
+          - not_null
+          - unique
+
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: contracted_value
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  # ============================================================
+  # REPORTING MARTS
+  # ============================================================
+
+  - name: gold_marketing_performance
+    description: Overall marketing KPIs by date and attribution type.
+
+  - name: gold_platform_performance
+    description: Marketing KPIs by date, platform and attribution type.
+
+  - name: gold_ad_performance
+    description: Advertisement-level marketing performance.
+
+  - name: gold_campaign_lead_performance
+    description: Lead counts by campaign, platform and attribution type.
+
+  - name: gold_sales_funnel_summary
+    description: Daily CRM and sales-funnel summary.

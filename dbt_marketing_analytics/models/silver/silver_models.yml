@@ -1,75 +1,96 @@
 version: 2
 
 models:
-  - name: silver_hyros_leads
-    description: >
-      Cleaned, typed, and deduplicated lead attribution records.
-      Grain is one row per lead.
-
-    columns:
-      - name: lead_id
-        data_tests:
-          - not_null
-          - unique
-
-      - name: md5_hash
-        data_tests:
-          - not_null
-
-      - name: load_timestamp
-        data_tests:
-          - not_null
-
-
-  - name: silver_marketing_inbound_campaign
-    description: >
-      Cleaned, typed, and deduplicated sales-funnel activity records.
-      Grain is one row per unique lead activity.
-
-    columns:
-      - name: inbound_activity_key
-        data_tests:
-          - not_null
-          - unique
-
-      - name: lead_id
-        data_tests:
-          - not_null
-
-      - name: contracted_value
-        data_tests:
-          - dbt_utils.expression_is_true:
-              arguments:
-                expression: ">= 0"
-
-
   - name: silver_hyros_ad_attribution
     description: >
-      Cleaned, typed, and deduplicated advertisement performance records.
-      Grain is one ad, reporting period, and reporting level.
+      Cleaned and deduplicated advertisement performance data containing
+      first-touch, last-touch, and scientific attribution metrics.
 
     columns:
       - name: ad_performance_key
+        description: Unique key for an ad performance reporting record.
         data_tests:
           - not_null
           - unique
 
       - name: ad_id
+        description: Advertisement identifier.
         data_tests:
           - not_null
 
+      - name: platform
+        description: Marketing platform.
+
       - name: start_date
+        description: Start date of the reporting period.
         data_tests:
           - not_null
 
       - name: end_date
+        description: End date of the reporting period.
         data_tests:
           - not_null
 
-      - name: reporting_level
+      - name: first_source_cost
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: last_source_cost
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: scientific_source_cost
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+  - name: silver_hyros_leads
+    description: >
+      Cleaned and deduplicated lead-level dataset containing first-touch
+      and last-touch marketing attribution.
+
+    columns:
+      - name: lead_id
+        description: Unique masked lead identifier.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: created_at
+        description: Timestamp when the lead was created.
         data_tests:
           - not_null
 
-      - name: md5_hash
+      - name: first_source_platform_name
+        description: First-touch marketing platform.
+
+      - name: last_source_platform_name
+        description: Last-touch marketing platform.
+
+  - name: silver_marketing_inbound_campaign
+    description: >
+      Cleaned CRM and inbound sales-funnel activity dataset.
+
+    columns:
+      - name: inbound_activity_key
+        description: Unique key for an inbound activity record.
         data_tests:
           - not_null
+          - unique
+
+      - name: activity_log_at
+        description: Timestamp of the inbound activity.
+        data_tests:
+          - not_null
+
+      - name: contracted_value
+        description: Contracted sales value.
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"

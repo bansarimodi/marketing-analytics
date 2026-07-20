@@ -5,12 +5,13 @@
 select
     start_date,
     platform_name,
+    ad_id,
+    ad_name,
+    adset_name,
+    reporting_level,
     attribution_type,
 
     sum(leads) as total_leads,
-    sum(new_leads) as total_new_leads,
-    sum(calls) as total_calls,
-    sum(qualified_calls) as total_qualified_calls,
     sum(sales) as total_sales,
 
     sum(total_revenue) as total_revenue,
@@ -48,11 +49,20 @@ select
     case
         when sum(leads) = 0 then null
         else sum(marketing_cost) / sum(leads)
-    end as cost_per_lead
+    end as cost_per_lead,
+
+    case
+        when sum(clicks) = 0 then null
+        else sum(marketing_cost) / sum(clicks)
+    end as cost_per_click
 
 from {{ ref('fact_ad_performance') }}
 
 group by
     start_date,
     platform_name,
+    ad_id,
+    ad_name,
+    adset_name,
+    reporting_level,
     attribution_type
