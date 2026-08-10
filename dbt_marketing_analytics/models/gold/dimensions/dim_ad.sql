@@ -1,33 +1,86 @@
-{{ config(
-    materialized = 'table'
-) }}
+<<<<<<< HEAD
+{{
+    config(
+        materialized='table'
+    )
+}}
 
-with ad_records as (
+-- =====================================================================
+-- DIMENSION: AD
+--
+-- Grain:
+--   One row per AD_ID.
+--
+-- Purpose:
+--   Provides the latest descriptive attributes for each advertisement.
+-- =====================================================================
+
+with ranked_ads as (
 
     select
-        upper(trim(platform)) as platform_name,
-        trim(ad_id) as ad_id,
-        trim(ad_name) as ad_name,
-        trim(adset_name) as adset_name,
+        ad_id,
+        ad_name,
+        adset_name,
+        platform,
         reporting_level,
+
         source_update_at,
-        load_timestamp
+        load_timestamp,
+
+        row_number() over (
+            partition by ad_id
+            order by
+                source_update_at desc nulls last,
+                load_timestamp desc
+        ) as row_num
+=======
+{{ config(
+    materialized = 'table',
+    schema = 'gold'
+) }}
+
+with advertisements as (
+
+    select
+        platform as platform_name,
+        ad_id,
+        ad_name,
+        adset_name,
+        source_update_at
+>>>>>>> ff66700 (final)
 
     from {{ ref('silver_hyros_ad_attribution') }}
 
     where ad_id is not null
-       or ad_name is not null
 
+<<<<<<< HEAD
+)
+
+select
+    ad_id,
+    ad_name,
+    adset_name,
+    platform,
+    reporting_level,
+
+    case
+        when adset_name is null then 'UNKNOWN'
+        else adset_name
+    end as adset_name_reporting,
+
+    source_update_at,
+    load_timestamp
+
+from ranked_ads
+=======
     union all
 
     select
-        upper(trim(first_source_platform_name)) as platform_name,
-        trim(first_source_ad_id) as ad_id,
-        trim(first_source_ad_name) as ad_name,
-        trim(first_source_adset_name) as adset_name,
-        null as reporting_level,
-        source_update_at,
-        load_timestamp
+        first_source_platform_name as platform_name,
+        first_source_ad_id as ad_id,
+        first_source_ad_name as ad_name,
+        first_source_adset_name as adset_name,
+        source_update_at
 
     from {{ ref('silver_hyros_leads') }}
 
@@ -37,18 +90,35 @@ with ad_records as (
     union all
 
     select
-        upper(trim(last_source_platform_name)) as platform_name,
-        trim(last_source_ad_id) as ad_id,
-        trim(last_source_ad_name) as ad_name,
-        trim(last_source_adset_name) as adset_name,
-        null as reporting_level,
-        source_update_at,
-        load_timestamp
+        last_source_platform_name as platform_name,
+        last_source_ad_id as ad_id,
+        last_source_ad_name as ad_name,
+        last_source_adset_name as adset_name,
+        source_update_at
 
     from {{ ref('silver_hyros_leads') }}
 
     where last_source_ad_id is not null
        or last_source_ad_name is not null
+
+),
+
+cleaned as (
+
+    select
+        upper(
+            coalesce(
+                nullif(trim(platform_name), ''),
+                'UNKNOWN'
+            )
+        ) as platform_name,
+
+        nullif(trim(ad_id), '') as ad_id,
+        nullif(trim(ad_name), '') as ad_name,
+        nullif(trim(adset_name), '') as adset_name,
+        source_update_at
+
+    from advertisements
 
 ),
 
@@ -58,16 +128,22 @@ keyed as (
         md5(
             concat_ws(
                 '|',
-                coalesce(platform_name, 'UNKNOWN'),
-                coalesce(ad_id, 'UNKNOWN'),
-                coalesce(ad_name, 'UNKNOWN'),
-                coalesce(adset_name, 'UNKNOWN')
+                platform_name,
+                coalesce(ad_id, ad_name)
             )
         ) as ad_key,
 
-        *
+        md5(platform_name) as platform_key,
 
-    from ad_records
+        platform_name,
+        ad_id,
+        ad_name,
+        adset_name,
+        source_update_at
+
+    from cleaned
+
+    where coalesce(ad_id, ad_name) is not null
 
 ),
 
@@ -75,11 +151,12 @@ ranked as (
 
     select
         *,
+
         row_number() over (
             partition by ad_key
             order by
                 source_update_at desc nulls last,
-                load_timestamp desc
+                ad_name desc nulls last
         ) as row_num
 
     from keyed
@@ -88,12 +165,13 @@ ranked as (
 
 select
     ad_key,
+    platform_key,
     platform_name,
     ad_id,
     ad_name,
-    adset_name,
-    reporting_level
+    adset_name
 
 from ranked
+>>>>>>> ff66700 (final)
 
 where row_num = 1

@@ -1,13 +1,47 @@
+<<<<<<< HEAD
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'dbt_marketing_analytics'
+version: '1.0.0'
+config-version: 2
+# This setting configures which "profile" dbt uses for this project.
+profile: 'dbt_marketing_analytics'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory. You probably won't need to change these!
+=======
 name: "dbt_marketing_analytics"
 version: "1.0.0"
 config-version: 2
 
 profile: "dbt_marketing_analytics"
 
+>>>>>>> ff66700 (final)
 model-paths: ["models"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 
+<<<<<<< HEAD
+clean-targets:         # directories to be removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# In this example config, we tell dbt to build all models in the example/
+# directory as views. These settings can be overridden in the individual model
+# files using the `{{ config(...) }}` macro.
+models:
+  dbt_marketing_analytics:
+    silver:
+      +schema: SILVER
+      +materialized: incremental
+=======
 clean-targets:
   - "target"
   - "dbt_packages"
@@ -19,6 +53,7 @@ models:
       +schema: SILVER
       +materialized: incremental
       +incremental_strategy: merge
+>>>>>>> ff66700 (final)
 
     gold:
       +schema: GOLD

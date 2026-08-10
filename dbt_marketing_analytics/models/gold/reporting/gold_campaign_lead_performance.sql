@@ -1,30 +1,39 @@
-{{ config(
-    materialized = 'table'
-) }}
+{{
+    config(
+        materialized='table'
+    )
+}}
 
 select
-    created_at::date as created_date,
+    lead_created_date,
     attribution_type,
-    platform_name,
-    campaign_id,
-    campaign_name,
 
-    count(distinct lead_id) as total_leads,
+    coalesce(platform, 'UNKNOWN')
+        as platform,
 
-    count(
-        distinct case
-            when click_at is not null then lead_id
-        end
-    ) as leads_with_click,
+    coalesce(campaign_id, 'UNKNOWN')
+        as campaign_id,
 
-    min(click_at) as earliest_click_at,
-    max(click_at) as latest_click_at
+    coalesce(campaign_name, 'UNKNOWN')
+        as campaign_name,
+
+    count(distinct lead_id)
+        as unique_leads,
+
+    sum(lead_count)
+        as attributed_leads,
+
+    avg(seconds_from_click_to_lead)
+        as average_seconds_from_click_to_lead,
+
+    avg(seconds_from_click_to_lead) / 3600.0
+        as average_hours_from_click_to_lead
 
 from {{ ref('fact_lead_attribution') }}
 
 group by
-    created_at::date,
+    lead_created_date,
     attribution_type,
-    platform_name,
+    platform,
     campaign_id,
     campaign_name

@@ -2,53 +2,134 @@
 
     {% set copy_sql %}
 
-        copy into
+        COPY INTO
             {{ target.database }}.BRONZE.HYROS_AD_ATTRIBUTION_RAW
 
-        from (
-            select
-                $1,  $2,  $3,  $4,  $5,  $6,  $7,
-                $8,  $9,  $10, $11, $12, $13, $14, $15, $16, $17,
-                $18, $19, $20, $21, $22, $23, $24, $25, $26, $27,
-                $28, $29, $30, $31, $32, $33, $34, $35, $36, $37,
-                $38, $39, $40, $41, $42, $43, $44, $45, $46, $47,
-                $48, $49, $50, $51, $52, $53, $54, $55, $56, $57,
-                $58, $59, $60, $61, $62, $63, $64, $65, $66, $67,
-                $68, $69, $70, $71, $72, $73, $74, $75, $76,
+        FROM
+        (
+            SELECT
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9,
+                $10,
+                $11,
+                $12,
+                $13,
+                $14,
+                $15,
+                $16,
+                $17,
+                $18,
+                $19,
+                $20,
+                $21,
+                $22,
+                $23,
+                $24,
+                $25,
+                $26,
+                $27,
+                $28,
+                $29,
+                $30,
+                $31,
+                $32,
+                $33,
+                $34,
+                $35,
+                $36,
+                $37,
+                $38,
+                $39,
+                $40,
+                $41,
+                $42,
+                $43,
+                $44,
+                $45,
+                $46,
+                $47,
+                $48,
+                $49,
+                $50,
+                $51,
+                $52,
+                $53,
+                $54,
+                $55,
+                $56,
+                $57,
+                $58,
+                $59,
+                $60,
+                $61,
+                $62,
+                $63,
+                $64,
+                $65,
+                $66,
+                $67,
+                $68,
+                $69,
+                $70,
+                $71,
+                $72,
+                $73,
+                $74,
+                $75,
+                $76,
 
-                metadata$filename,
-                metadata$file_row_number,
-                metadata$file_last_modified,
-                current_timestamp()
+                METADATA$FILENAME,
+                METADATA$FILE_ROW_NUMBER,
+                METADATA$FILE_LAST_MODIFIED,
+                CURRENT_TIMESTAMP()
 
-            from
-                @{{ target.database }}.BRONZE.STG_HYROS_AD_ATTRIBUTION
+            FROM
+                @{{ target.database }}.BRONZE.MARKETING_S3_STAGE
         )
 
-        file_format = (
-            type = csv
-            field_delimiter = ','
-            skip_header = 1
-            field_optionally_enclosed_by = '"'
-            empty_field_as_null = true
-            null_if = ('', 'NULL', 'null')
-            trim_space = true
-            error_on_column_count_mismatch = true
-            replace_invalid_characters = true
+        PATTERN = '.*[/]hyros_ad_attribution[.]csv'
+
+        FILE_FORMAT =
+        (
+            FORMAT_NAME =
+                '{{ target.database }}.BRONZE.MARKETING_CSV_FORMAT'
         )
 
-        on_error = 'ABORT_STATEMENT'
-        force = false
+        ON_ERROR = 'ABORT_STATEMENT'
+        FORCE = FALSE
 
     {% endset %}
 
+
     {% if execute %}
 
-        {% do log('Loading HYROS_AD_ATTRIBUTION...', info=true) %}
+        {{ log("Loading new HYROS_AD_ATTRIBUTION files...", info=True) }}
 
-        {% set result = run_query(copy_sql) %}
+        {% set copy_result = run_query(copy_sql) %}
 
-        {% do log('HYROS_AD_ATTRIBUTION load completed.', info=true) %}
+        {% if copy_result is not none %}
+
+            {% for row in copy_result.rows %}
+
+                {{ log(
+                    "HYROS_AD_ATTRIBUTION | File: " ~ row[0]
+                    ~ " | Status: " ~ row[1]
+                    ~ " | Rows loaded: " ~ row[3],
+                    info=True
+                ) }}
+
+            {% endfor %}
+
+        {% endif %}
+
+        {{ log("HYROS_AD_ATTRIBUTION load completed.", info=True) }}
 
     {% endif %}
 

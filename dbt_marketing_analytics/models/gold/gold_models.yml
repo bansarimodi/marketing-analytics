@@ -1,81 +1,107 @@
 version: 2
 
 models:
+<<<<<<< HEAD
+  - name: dim_ad
+    description: Latest descriptive record for each advertisement.
+    columns:
+      - name: ad_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_lead
+    description: One row per marketing lead.
+    columns:
+      - name: lead_id
+        data_tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    description: Calendar date dimension.
+    columns:
+      - name: date_day
+        data_tests:
+          - not_null
+          - unique
+
+      - name: date_key
+=======
   # ============================================================
   # DIMENSIONS
   # ============================================================
 
   - name: dim_date
-    description: Date dimension used across Gold fact tables.
+    description: One record per reporting or business activity date.
 
     columns:
       - name: date_key
         description: Numeric date key in YYYYMMDD format.
+>>>>>>> ff66700 (final)
         data_tests:
           - not_null
           - unique
 
+<<<<<<< HEAD
+  - name: fact_lead_attribution
+    description: First-touch and last-touch attribution for each lead.
+    columns:
+      - name: lead_attribution_key
+=======
       - name: full_date
+        description: Calendar date.
         data_tests:
           - not_null
           - unique
 
   - name: dim_platform
-    description: Unique marketing platforms.
+    description: One record per marketing platform.
 
     columns:
       - name: platform_key
+        description: Unique platform key.
+>>>>>>> ff66700 (final)
         data_tests:
           - not_null
           - unique
 
+<<<<<<< HEAD
+      - name: lead_id
+        data_tests:
+          - not_null
+
+      - name: attribution_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - FIRST_TOUCH
+                  - LAST_TOUCH
+
+  - name: fact_ad_performance
+    description: Advertisement metrics unpivoted by attribution model.
+    columns:
+      - name: ad_attribution_fact_key
+=======
       - name: platform_name
+        description: Marketing platform name.
         data_tests:
           - not_null
           - unique
 
   - name: dim_ad
-    description: Advertisement and ad-set descriptive information.
+    description: One record per advertisement and platform.
 
     columns:
       - name: ad_key
+        description: Unique advertisement and platform key.
         data_tests:
           - not_null
           - unique
-
-  - name: dim_campaign
-    description: Marketing campaign descriptive information.
-
-    columns:
-      - name: campaign_key
-        data_tests:
-          - not_null
-          - unique
-
-  # ============================================================
-  # FACTS
-  # ============================================================
-
-  - name: fact_ad_performance
-    description: >
-      Advertisement performance normalized into First-Touch,
-      Last-Touch and Scientific attribution rows.
-
-    columns:
-      - name: ad_performance_fact_key
-        data_tests:
-          - not_null
-          - unique
-
-      - name: date_key
-        data_tests:
-          - not_null
-          - relationships:
-              arguments:
-                to: ref('dim_date')
-                field: date_key
 
       - name: platform_key
+        description: Foreign key to the platform dimension.
         data_tests:
           - not_null
           - relationships:
@@ -83,17 +109,49 @@ models:
                 to: ref('dim_platform')
                 field: platform_key
 
-      - name: ad_key
+  - name: dim_campaign
+    description: One record per campaign and platform.
+
+    columns:
+      - name: campaign_key
+        description: Unique campaign and platform key.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: platform_key
+        description: Foreign key to the platform dimension.
         data_tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('dim_ad')
-                field: ad_key
+                to: ref('dim_platform')
+                field: platform_key
+
+  # ============================================================
+  # FACTS
+  # ============================================================
+
+  - name: fact_ad_performance
+    description: >
+      One advertisement-performance record per advertisement,
+      platform and reporting period.
+
+    columns:
+      - name: ad_performance_key
+        description: Unique advertisement-performance fact key.
+>>>>>>> ff66700 (final)
+        data_tests:
+          - not_null
+          - unique
+
+<<<<<<< HEAD
+      - name: ad_id
+        data_tests:
+          - not_null
 
       - name: attribution_type
         data_tests:
-          - not_null
           - accepted_values:
               arguments:
                 values:
@@ -101,7 +159,54 @@ models:
                   - LAST_TOUCH
                   - SCIENTIFIC
 
-      - name: marketing_cost
+  - name: fact_sales_funnel
+    description: Sales-funnel activity with derived stage indicators.
+    columns:
+      - name: inbound_activity_key
+=======
+      - name: ad_key
+        description: Foreign key to the advertisement dimension.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_ad')
+                field: ad_key
+
+      - name: platform_key
+        description: Foreign key to the platform dimension.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_platform')
+                field: platform_key
+
+      - name: start_date_key
+        description: Reporting-period start-date key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: end_date_key
+        description: Reporting-period end-date key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: first_source_cost
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: last_source_cost
         data_tests:
           - dbt_utils.expression_is_true:
               arguments:
@@ -109,20 +214,29 @@ models:
 
   - name: fact_lead_attribution
     description: >
-      One row per lead and attribution type, containing campaign,
-      platform and advertisement attribution.
+      One lead-level record containing First-Touch and Last-Touch
+      marketing attribution keys and attributes.
 
     columns:
       - name: lead_attribution_fact_key
+        description: Unique lead-attribution fact key.
+>>>>>>> ff66700 (final)
         data_tests:
           - not_null
           - unique
 
       - name: lead_id
+<<<<<<< HEAD
         data_tests:
           - not_null
+=======
+        description: Unique masked lead identifier.
+        data_tests:
+          - not_null
+          - unique
 
-      - name: date_key
+      - name: created_date_key
+        description: Lead-created date key.
         data_tests:
           - not_null
           - relationships:
@@ -130,56 +244,92 @@ models:
                 to: ref('dim_date')
                 field: date_key
 
-      - name: attribution_type
+      - name: first_platform_key
+        description: First-Touch platform key.
         data_tests:
-          - not_null
-          - accepted_values:
+          - relationships:
               arguments:
-                values:
-                  - FIRST_TOUCH
-                  - LAST_TOUCH
+                to: ref('dim_platform')
+                field: platform_key
+
+      - name: last_platform_key
+        description: Last-Touch platform key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_platform')
+                field: platform_key
+
+      - name: first_campaign_key
+        description: First-Touch campaign key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_campaign')
+                field: campaign_key
+
+      - name: last_campaign_key
+        description: Last-Touch campaign key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_campaign')
+                field: campaign_key
+
+      - name: first_ad_key
+        description: First-Touch advertisement key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_ad')
+                field: ad_key
+
+      - name: last_ad_key
+        description: Last-Touch advertisement key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_ad')
+                field: ad_key
 
   - name: fact_sales_funnel
     description: >
-      CRM and inbound funnel activities. This fact remains separate
-      from lead attribution because the current source lead IDs do
-      not match.
+      One latest sales-pipeline record per lead containing triage,
+      strategy-call, sale-status and contracted-value information.
 
     columns:
       - name: sales_funnel_fact_key
+        description: Unique sales-funnel fact key.
         data_tests:
           - not_null
           - unique
 
-      - name: date_key
+      - name: lead_id
+        description: Unique pipeline lead identifier.
         data_tests:
           - not_null
+          - unique
+
+      - name: activity_date_key
+        description: Latest sales-activity date key.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+
+      - name: triage_date_key
+        description: Triage-call date key.
+        data_tests:
           - relationships:
               arguments:
                 to: ref('dim_date')
                 field: date_key
 
       - name: contracted_value
+        description: Contracted sales value.
         data_tests:
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= 0"
-
-  # ============================================================
-  # REPORTING MARTS
-  # ============================================================
-
-  - name: gold_marketing_performance
-    description: Overall marketing KPIs by date and attribution type.
-
-  - name: gold_platform_performance
-    description: Marketing KPIs by date, platform and attribution type.
-
-  - name: gold_ad_performance
-    description: Advertisement-level marketing performance.
-
-  - name: gold_campaign_lead_performance
-    description: Lead counts by campaign, platform and attribution type.
-
-  - name: gold_sales_funnel_summary
-    description: Daily CRM and sales-funnel summary.
+>>>>>>> ff66700 (final)
